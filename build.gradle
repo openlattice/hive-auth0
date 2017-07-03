@@ -1,0 +1,97 @@
+/*
+ * Copyright (C) 2017. OpenLattice, Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * You can contact the owner of the copyright at support@thedataloom.com
+ */
+
+plugins {
+  id "java"
+  id "eclipse"
+  id "idea"
+  id "jacoco"
+}
+
+/*
+*	Kryptnostic conductor service
+* 	version is defined in kryptnostic-gradles/kryptnostic.gradle
+*/
+description = "OpenLattice Hive Authentication Plugin"
+group = "com.openlattice"
+
+ext.projectName = "hive-auth0"
+ext.scmUrl = 'scm:git:https://github.com/openlattice/hive-auth0.git'
+ext.connectionUrl = 'scm:git:https://github.com/openlattice/hive-auth0.git'
+ext.developerConnectionUrl = 'scm:git:https://github.com/openlattice/hive-auth0.git'
+
+apply from: "https://raw.githubusercontent.com/kryptnostic/gradles/master/kryptnostic.gradle"
+
+sourceCompatibility=JavaVersion.VERSION_1_8
+targetCompatibility=JavaVersion.VERSION_1_8
+
+configurations {
+    provided
+}
+
+configurations.all {
+	exclude module: 'slf4j-log4j12'
+  exclude group :'asm', module: 'asm'
+}
+
+sourceSets {
+    main.compileClasspath += configurations.provided
+    test.compileClasspath += configurations.provided
+    test.runtimeClasspath += configurations.provided
+}
+
+dependencies {
+    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:${jackson_version}"
+    
+    compile "org.ow2.asm:asm:5.0.4"
+    provided "org.apache.hive:hive-service:2.1.1"
+    if( project.hasProperty('developmentMode') && project.developmentMode ) {
+        logger.quiet(project.name + " using project dependencies.")
+        //compile project(":rhizome")
+        //compile project(":conductor-client")
+        //compile project(":kindling")
+        //compile project(":courier")
+    } else {
+        logger.quiet(project.name + " using jar dependencies.")
+        //compile "com.kryptnostic:rhizome:${rhizome_version}"
+        //compile "com.kryptnostic:conductor-client:${conductor_client_version}"
+        //compile "com.kryptnostic:kindling:${kindling_version}"
+        //compile "com.kryptnostic:courier:${courier_version}"
+    }
+    /*
+     * TESTING
+     */
+     testCompile "junit:junit:${junit_version}"
+     testCompile "org.mockito:mockito-all:${mockito_version}"
+}
+
+test {
+    systemProperty 'java.library.path','lib/centos:lib/macosx:/usr/lib64'
+    jvmArgs '-Djava.library.path=./lib/centos:./lib/macosx:/usr/lib64'
+}
+
+eclipse {
+    ext.downloadSources = true
+    ext.downloadJavadoc = true
+
+    ext.sourceCompatibility=JavaVersion.VERSION_1_8
+    ext.targetCompatibility=JavaVersion.VERSION_1_8
+}
+
+eclipse.classpath.plusConfigurations += [configurations.provided] 
