@@ -1,69 +1,74 @@
 package com.openlattice.com.openlattice.authentication;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.google.common.base.Charsets;
+import digital.loom.rhizome.configuration.auth0.Auth0Configuration;
+import java.security.NoSuchAlgorithmException;
+import javax.security.sasl.AuthenticationException;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.hive.service.auth.PasswdAuthenticationProvider;
 
-import javax.security.sasl.AuthenticationException;
-
-public class HiveAuth0AuthenticationProvider implements PasswdAuthenticationProvider {
-    private static final AuthenticationException AUTH_ERROR = new Auth0TokenException("Authentication Error");
-
+public abstract class HiveAuth0AuthenticationProvider implements PasswdAuthenticationProvider {
     private JWTVerifier jwtVerifier;
-    private String domain;
-    private String issuer;
-    private String clientId;
-    private String clientSecret;
-    private String securedRoute;
-    private boolean base64EncodedSecret;
-    private AuthorityStrategy authorityStrategy;
-    private Algorithm signingAlgorithm;
-    private String publicKeyPath;
+    private String      domain;
+    private String      issuer;
+    private String      clientId;
+    private String      clientSecret;
+    private String      securedRoute;
+    private boolean     base64EncodedSecret;
+    private String      publicKeyPath;
 
-    @Override public void Authenticate( String user, String password ) throws AuthenticationException {
-
+    protected HiveAuth0AuthenticationProvider( Auth0Configuration auth0Configuration ) {
+        this.domain = auth0Configuration.getDomain();
+        this.issuer = auth0Configuration.getIssuer();
+        this.clientId = auth0Configuration.getClientId();
+        this.clientSecret = auth0Configuration.getClientSecret();
+        this.securedRoute = auth0Configuration.getSecuredRoute();
+        this.base64EncodedSecret = auth0Configuration.isBase64EncodedSecret();
+        this.publicKeyPath = auth0Configuration.getPublicKeyPath().orNull();
+        this.jwtVerifier = getJwtVerifier( auth0Configuration.getSigningAlgorithm() );
     }
 
     @Override
-    public void setAuthorityStrategy( AuthorityStrategy authorityStrategy ) {
-        super.setAuthorityStrategy( authorityStrategy );
+    public void Authenticate( String user, String password ) throws AuthenticationException {
+        final String jwtToken = password;
+        final DecodedJWT decodedToken = jwtVerifier.verify( jwtToken );
+        //TODO: Perform additional verification of claims.
     }
 
-    @Override
-    public void setBase64EncodedSecret( boolean base64EncodedSecret ) {
-        super.setBase64EncodedSecret( base64EncodedSecret );
-    }
+    public JWTVerifier getJwtVerifier( String signingAlgorithm ) {
+        final Algorithm algorithm;
+        final byte[] cs;
 
-    @Override
-    public void setClientId( String clientId ) {
-        super.setClientId( clientId );
-    }
+        if ( base64EncodedSecret ) {
+            cs = Base64.decodeBase64( clientSecret );// clientId, issuer );
+        } else {
+            cs = clientSecret.getBytes( Charsets.UTF_8 ); //, clientId, issuer );
+        }
 
-    @Override
-    public void setClientSecret( String clientSecret ) {
-        super.setClientSecret( clientSecret );
-    }
+        switch ( signingAlgorithm ) {
+            case "HS256":
+                algorithm = Algorithm.HMAC256( cs );
+                break;
+            case "HS384":
+                algorithm = Algorithm.HMAC384( cs );
+                break;
+            case "HS512":
+                algorithm = Algorithm.HMAC512( cs );
+                break;
+            //TODO: Implement RSA signature verification.
+            case "RS256":
+            case "RS384":
+            case "RS512":
+            default:
+                throw new UnsupportedOperationException( "Unrecognized signing algorithm: " + signingAlgorithm );
+        }
+        return JWT.require( algorithm )
+                .withIssuer( issuer )
+                .build();
 
-    @Override
-    public void setDomain( String domain ) {
-        super.setDomain( domain );
-    }
-
-    @Override
-    public void setIssuer( String issuer ) {
-        super.setIssuer( issuer );
-    }
-
-    @Override
-    public void setPublicKeyPath( String publicKeyPath ) {
-        super.setPublicKeyPath( publicKeyPath );
-    }
-
-    @Override
-    public void setSecuredRoute( String securedRoute ) {
-        super.setSecuredRoute( securedRoute );
-    }
-
-    @Override
-    public void setSigningAlgorithm( Algorithm signingAlgorithm ) {
-        super.setSigningAlgorithm( signingAlgorithm );
     }
 }
