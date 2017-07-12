@@ -68,6 +68,7 @@ tasks.withType(Checkstyle) {
 
 shadowJar {
     relocate 'com.google', 'shadow.com.google'
+    relocate 'com.fasterxml', 'shadow.com.fasterxml'
 }
 
 configurations {
