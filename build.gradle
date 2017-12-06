@@ -39,7 +39,7 @@ ext.scmUrl = 'scm:git:https://github.com/openlattice/hive-auth0.git'
 ext.connectionUrl = 'scm:git:https://github.com/openlattice/hive-auth0.git'
 ext.developerConnectionUrl = 'scm:git:https://github.com/openlattice/hive-auth0.git'
 
-apply from: "https://raw.githubusercontent.com/kryptnostic/gradles/master/kryptnostic.gradle"
+apply from: "https://raw.githubusercontent.com/openlattice/gradles/master/openlattice.gradle"
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
@@ -129,4 +129,4 @@ eclipse {
     ext.targetCompatibility = JavaVersion.VERSION_1_8
 }
 
-eclipse.classpath.plusConfigurations += [configurations.provided] 
+eclipse.classpath.plusConfigurations += [configurations.provided]
